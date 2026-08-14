@@ -6,47 +6,48 @@ export default async function handler(req, res) {
   let name = '', email = '', company = '', role = '';
   if (req.method === 'POST') {
     const contentType = req.headers['content-type'] || '';
-    if (contentType.includes('application/json')) {
-      // JSON body
-      const data = req.body;
-      name = data.name || '';
-      email = data.email || '';
-      company = data.company || '';
-      role = data.role || '';
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      // URL-encoded body
-      // req.body should already be parsed by Vercel, but let's handle manually if not
+    let rawBody = '';
+    try {
+      rawBody = await req.text();
+    } catch (e) {
+      console.error('Failed to get raw body:', e);
+      // fallback to req.body if it's already parsed
       if (req.body && typeof req.body === 'object') {
         name = req.body.name || '';
         email = req.body.email || '';
         company = req.body.company || '';
         role = req.body.role || '';
-      } else {
-        // Fallback: parse raw body
-        let rawBody = '';
-        try {
-          // In Vercel, we can't directly get raw body; we rely on req.body.
-          // If req.body is string, parse it.
-          if (typeof req.body === 'string') {
-            const params = new URLSearchParams(req.body);
-            name = params.get('name') || '';
-            email = params.get('email') || '';
-            company = params.get('company') || '';
-            role = params.get('role') || '';
-          }
-        } catch (e) {
-          console.error('Failed to parse body as URLSearchParams:', e);
-        }
       }
-    } else {
-      // multipart/form-data or unknown
-      console.warn('Unsupported content type:', contentType);
-      // For simplicity, we can still try to use req.body if it's an object
-      if (req.body && typeof req.body === 'object') {
-        name = req.body.name || '';
-        email = req.body.email || '';
-        company = req.body.company || '';
-        role = req.body.role || '';
+    }
+
+    if (rawBody) {
+      if (contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(rawBody);
+          name = data.name || '';
+          email = data.email || '';
+          company = data.company || '';
+          role = data.role || '';
+        } catch (e) {
+          console.error('Failed to parse JSON:', e);
+        }
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const params = new URLSearchParams(rawBody);
+        name = params.get('name') || '';
+        email = params.get('email') || '';
+        company = params.get('company') || '';
+        role = params.get('role') || '';
+      } else {
+        // Try to parse as URLSearchParams anyway (some clients send multipart but we ignore files)
+        try {
+          const params = new URLSearchParams(rawBody);
+          name = params.get('name') || '';
+          email = params.get('email') || '';
+          company = params.get('company') || '';
+          role = params.get('role') || '';
+        } catch (e) {
+          console.error('Failed to parse as URLSearchParams:', e);
+        }
       }
     }
   }
