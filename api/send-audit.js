@@ -3,45 +3,18 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  // Parse form-encoded body (the form uses enctype="application/x-www-form-urlencoded")
-  let name = '', email = '', company = '', role = '';
-  if (req.method === 'POST') {
-    const contentType = req.headers['content-type'] || '';
-    let rawBody = '';
-    try {
-      rawBody = await req.text();
-    } catch (e) {
-      console.error('Failed to get raw body:', e);
-      // fallback to req.body if it's already parsed
-      if (req.body && typeof req.body === 'object') {
-        name = req.body.name || '';
-        email = req.body.email || '';
-        company = req.body.company || '';
-        role = req.body.role || '';
-      }
-    }
+  // Vercel automatically parses urlencoded and JSON bodies into req.body
+  let { name, email, company, role } = req.body || {};
+  if (typeof name !== 'string') name = '';
+  if (typeof email !== 'string') email = '';
+  if (typeof company !== 'string') company = '';
+  if (typeof role !== 'string') role = '';
 
-    if (rawBody) {
-      if (contentType.includes('application/x-www-form-urlencoded')) {
-        const params = new URLSearchParams(rawBody);
-        name = params.get('name') || '';
-        email = params.get('email') || '';
-        company = params.get('company') || '';
-        role = params.get('role') || '';
-      } else {
-        // Try to parse as URLSearchParams anyway (some clients send multipart but we ignore files)
-        try {
-          const params = new URLSearchParams(rawBody);
-          name = params.get('name') || '';
-          email = params.get('email') || '';
-          company = params.get('company') || '';
-          role = params.get('role') || '';
-        } catch (e) {
-          console.error('Failed to parse as URLSearchParams:', e);
-        }
-      }
-    }
-  }
+  // Trim
+  name = name.trim();
+  email = email.trim();
+  company = company.trim();
+  role = role.trim();
 
   console.log('Parsed:', { name, email, company, role });
 
@@ -58,8 +31,7 @@ export default async function handler(req, res) {
 
   try {
     // ---------- Generate PDF audit ----------
-    const { PDFDocument } = require('pdfkit');
-    const stream = require('stream');
+    const PDFDocument = require('pdfkit');
     async function generateAuditPDF(data) {
       const doc = new PDFDocument({ size: 'A4', margin: 40 });
       const chunks = [];
