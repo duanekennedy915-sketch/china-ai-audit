@@ -1,0 +1,13 @@
+{
+  "name": "china-ai-audit",
+  "version": "1.0.0",
+  "description": "Landing page for China-AI Exposure Audit",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build"
+  },
+  "dependencies": {
+    "pdfkit": "^0.15.0"
+  }
+}
