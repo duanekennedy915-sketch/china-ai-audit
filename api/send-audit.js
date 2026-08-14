@@ -1,9 +1,57 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  // Log for debugging
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Method:', req.method);
+
+  let name = '', email = '', company = '', role = '';
+  if (req.method === 'POST') {
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('application/json')) {
+      // JSON body
+      const data = req.body;
+      name = data.name || '';
+      email = data.email || '';
+      company = data.company || '';
+      role = data.role || '';
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      // URL-encoded body
+      // req.body should already be parsed by Vercel, but let's handle manually if not
+      if (req.body && typeof req.body === 'object') {
+        name = req.body.name || '';
+        email = req.body.email || '';
+        company = req.body.company || '';
+        role = req.body.role || '';
+      } else {
+        // Fallback: parse raw body
+        let rawBody = '';
+        try {
+          // In Vercel, we can't directly get raw body; we rely on req.body.
+          // If req.body is string, parse it.
+          if (typeof req.body === 'string') {
+            const params = new URLSearchParams(req.body);
+            name = params.get('name') || '';
+            email = params.get('email') || '';
+            company = params.get('company') || '';
+            role = params.get('role') || '';
+          }
+        } catch (e) {
+          console.error('Failed to parse body as URLSearchParams:', e);
+        }
+      }
+    } else {
+      // multipart/form-data or unknown
+      console.warn('Unsupported content type:', contentType);
+      // For simplicity, we can still try to use req.body if it's an object
+      if (req.body && typeof req.body === 'object') {
+        name = req.body.name || '';
+        email = req.body.email || '';
+        company = req.body.company || '';
+        role = req.body.role || '';
+      }
+    }
   }
 
-  const { name, email, company, role } = req.body;
+  console.log('Parsed:', { name, email, company, role });
 
   if (!name || !email) {
     return res.status(400).json({ error: 'Name and email are required' });
