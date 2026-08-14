@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         to: 'Kennedy@CoreVectorSystems.com',
         subject: 'Your China-AI Exposure Audit',
         html: `
-          <h2>Your China-AI Exposure Audit Submission Received</h2>
+          <h2>Your China-Ai Exposure Audit Submission Received</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Company:</strong> ${company || 'N/A'}</p>
@@ -42,22 +42,8 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: data.message || 'Failed to send email' });
     }
 
-    // Return a simple thank-you page (HTML)
-    return res.status(200).send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Thank you</title>
-          <style>
-            body { font-family: sans-serif; text-align: center; padding: 2rem; }
-          </style>
-        </head>
-        <body>
-          <h1>Thank you!</h1>
-          <p>Your audit has been received. Please check your email for the results.</p>
-        </body>
-      </html>
-    `);
+    // Redirect to Formspree thank-you page
+    return res.redirect(302, 'https://formspree.io/f/xeajkble/thanks');
   } catch (error) {
     console.error('Error sending email:', error);
     return res.status(500).json({ error: 'Internal server error' });
